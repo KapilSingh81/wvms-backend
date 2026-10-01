@@ -1,5 +1,6 @@
 import express from 'express';
 import { Create, deleteDepartment, List, update } from '../controller/departmetnController.js';
+import Auth from '../middleware/auth.js';
 
 const departmentRouter = express.Router();
 
@@ -38,7 +39,7 @@ const departmentRouter = express.Router();
  *       400:
  *         description: Name is missing or department already exists
  */
-departmentRouter.post('/create', Create);
+departmentRouter.post('/create', Auth, Create);
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ departmentRouter.post('/create', Create);
  *       200:
  *         description: List of departments (newest first)
  */
-departmentRouter.get('/list', List);
+departmentRouter.get('/list', Auth, List);
 
 /**
  * @swagger
@@ -91,7 +92,7 @@ departmentRouter.get('/list', List);
  *       404:
  *         description: Department not found
  */
-departmentRouter.put('/update/:id', update);
+departmentRouter.put('/update/:id', Auth, update);
 
 /**
  * @swagger
@@ -114,6 +115,6 @@ departmentRouter.put('/update/:id', update);
  *       404:
  *         description: Department not found
  */
-departmentRouter.delete('/delete/:id', deleteDepartment);
+departmentRouter.delete('/delete/:id', Auth, deleteDepartment);
 
 export default departmentRouter;

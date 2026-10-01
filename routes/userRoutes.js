@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { Create, deleteUser, GetById, List, update } from '../controller/userController.js';
+import Auth from '../middleware/auth.js';
 
 const dir = 'uploads/users';
 fs.mkdirSync(dir, { recursive: true });
@@ -86,7 +87,7 @@ const adminUserRouter = express.Router();
  *       400:
  *         description: Missing fields, invalid email, duplicate email or username, or invalid role
  */
-adminUserRouter.post('/create', upload.single('image'), Create);
+adminUserRouter.post('/create', Auth, upload.single('image'), Create);
 
 /**
  * @swagger
@@ -100,7 +101,7 @@ adminUserRouter.post('/create', upload.single('image'), Create);
  *       200:
  *         description: List of users with their role (newest first)
  */
-adminUserRouter.get('/list', List);
+adminUserRouter.get('/list', Auth, List);
 
 /**
  * @swagger
@@ -123,7 +124,7 @@ adminUserRouter.get('/list', List);
  *       404:
  *         description: User not found
  */
-adminUserRouter.get('/:id', GetById);
+adminUserRouter.get('/:id', Auth, GetById);
 
 /**
  * @swagger
@@ -191,7 +192,7 @@ adminUserRouter.get('/:id', GetById);
  *       404:
  *         description: User not found
  */
-adminUserRouter.put('/update/:id', upload.single('image'), update);
+adminUserRouter.put('/update/:id', Auth, upload.single('image'), update);
 
 /**
  * @swagger
@@ -214,6 +215,6 @@ adminUserRouter.put('/update/:id', upload.single('image'), update);
  *       404:
  *         description: User not found
  */
-adminUserRouter.delete('/delete/:id', deleteUser);
+adminUserRouter.delete('/delete/:id', Auth, deleteUser);
 
 export default adminUserRouter;

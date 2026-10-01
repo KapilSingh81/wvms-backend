@@ -18,7 +18,14 @@ export const employeeModel = sequelize.define(
     password: { type: DataTypes.STRING(255), allowNull: false },
     status: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: true },
     about: { type: DataTypes.TEXT, allowNull: true },
-    image: { type: DataTypes.STRING(255), allowNull: true },
+    image: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      get() {
+        const file = this.getDataValue("image");
+        return file ? `${process.env.BASE_URL}/uploads/employees/${file}` : null;
+      },
+    },
     is_deleted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { tableName: "employee_master", freezeTableName: true, timestamps: false }

@@ -1,5 +1,6 @@
 import express from 'express';
 import { Create, deleteDesignation, List, update } from '../controller/designationController.js';
+import Auth from '../middleware/auth.js';
 
 const designationRouter = express.Router();
 
@@ -38,7 +39,7 @@ const designationRouter = express.Router();
  *       400:
  *         description: Name is missing or designation already exists
  */
-designationRouter.post('/create', Create);
+designationRouter.post('/create', Auth, Create);
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ designationRouter.post('/create', Create);
  *       200:
  *         description: List of designations (newest first)
  */
-designationRouter.get('/list', List);
+designationRouter.get('/list', Auth, List);
 
 /**
  * @swagger
@@ -91,7 +92,7 @@ designationRouter.get('/list', List);
  *       404:
  *         description: Designation not found
  */
-designationRouter.put('/update/:id', update);
+designationRouter.put('/update/:id', Auth, update);
 
 /**
  * @swagger
@@ -114,6 +115,6 @@ designationRouter.put('/update/:id', update);
  *       404:
  *         description: Designation not found
  */
-designationRouter.delete('/delete/:id', deleteDesignation);
+designationRouter.delete('/delete/:id', Auth, deleteDesignation);
 
 export default designationRouter;

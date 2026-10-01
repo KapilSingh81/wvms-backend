@@ -5,6 +5,7 @@ import fs from 'fs';
 import {
     Checkout, Create, deleteVisitor, GetById, List, Search, update,
 } from '../controller/visitorController.js';
+import Auth from '../middleware/auth.js';
 
 const dir = 'uploads/visitors';
 fs.mkdirSync(dir, { recursive: true });
@@ -100,7 +101,7 @@ const visitorRouter = express.Router();
  *       400:
  *         description: Missing fields, invalid phone/email, missing image, invalid employee, or visitor already checked in
  */
-visitorRouter.post('/create', upload.single('image'), Create);
+visitorRouter.post('/create', Auth, upload.single('image'), Create);
 
 /**
  * @swagger
@@ -122,7 +123,7 @@ visitorRouter.post('/create', upload.single('image'), Create);
  *       200:
  *         description: List of visitors with employee and department (newest first)
  */
-visitorRouter.get('/list', List);
+visitorRouter.get('/list', Auth, List);
 
 /**
  * @swagger
@@ -150,7 +151,7 @@ visitorRouter.get('/list', List);
  *       404:
  *         description: No previous visitor found
  */
-visitorRouter.get('/search', Search);
+visitorRouter.get('/search', Auth, Search);
 
 /**
  * @swagger
@@ -176,7 +177,7 @@ visitorRouter.get('/search', Search);
  *       404:
  *         description: Visitor not found
  */
-visitorRouter.put('/checkout/:id', Checkout);
+visitorRouter.put('/checkout/:id', Auth, Checkout);
 
 /**
  * @swagger
@@ -199,7 +200,7 @@ visitorRouter.put('/checkout/:id', Checkout);
  *       404:
  *         description: Visitor not found
  */
-visitorRouter.get('/:id', GetById);
+visitorRouter.get('/:id', Auth, GetById);
 
 /**
  * @swagger
@@ -270,7 +271,7 @@ visitorRouter.get('/:id', GetById);
  *       404:
  *         description: Visitor not found
  */
-visitorRouter.put('/update/:id', upload.single('image'), update);
+visitorRouter.put('/update/:id', Auth, upload.single('image'), update);
 
 /**
  * @swagger
@@ -293,6 +294,6 @@ visitorRouter.put('/update/:id', upload.single('image'), update);
  *       404:
  *         description: Visitor not found
  */
-visitorRouter.delete('/delete/:id', deleteVisitor);
+visitorRouter.delete('/delete/:id', Auth, deleteVisitor);
 
 export default visitorRouter;

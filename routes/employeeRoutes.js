@@ -1,22 +1,34 @@
-import express from 'express';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
-import { Create, deleteEmployee, GetById, List, update } from '../controller/employeeController.js';
+import express from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import {
+  Create,
+  deleteEmployee,
+  GetById,
+  List,
+  update,
+} from "../controller/employeeController.js";
+import Auth from "../middleware/auth.js";
 
-const dir = 'uploads/employees';
+const dir = "uploads/employees";
 fs.mkdirSync(dir, { recursive: true });
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, dir),
-    filename: (req, file, cb) =>
-        cb(null, `${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`),
+  destination: (req, file, cb) => cb(null, dir),
+  filename: (req, file, cb) =>
+    cb(
+      null,
+      `${Date.now()}-${Math.round(Math.random() * 1e6)}${path.extname(file.originalname)}`,
+    ),
 });
 const upload = multer({
-    storage,
-    limits: { fileSize: 2 * 1024 * 1024 },
-    fileFilter: (req, file, cb) =>
-        file.mimetype.startsWith('image/') ? cb(null, true) : cb(new Error('Only images allowed')),
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) =>
+    file.mimetype.startsWith("image/")
+      ? cb(null, true)
+      : cb(new Error("Only images allowed")),
 });
 
 const employeeRouter = express.Router();
@@ -100,7 +112,7 @@ const employeeRouter = express.Router();
  *       400:
  *         description: Missing fields, invalid email, password mismatch, duplicate email, or invalid department/designation
  */
-employeeRouter.post('/create', upload.single('image'), Create);
+employeeRouter.post("/create", Auth, upload.single("image"), Create);
 
 /**
  * @swagger
@@ -114,7 +126,7 @@ employeeRouter.post('/create', upload.single('image'), Create);
  *       200:
  *         description: List of employees with department and designation (newest first)
  */
-employeeRouter.get('/list', List);
+employeeRouter.get("/list", Auth, List);
 
 /**
  * @swagger
@@ -137,7 +149,7 @@ employeeRouter.get('/list', List);
  *       404:
  *         description: Employee not found
  */
-employeeRouter.get('/:id', GetById);
+employeeRouter.get("/:id", Auth, GetById);
 
 /**
  * @swagger
@@ -218,7 +230,7 @@ employeeRouter.get('/:id', GetById);
  *       404:
  *         description: Employee not found
  */
-employeeRouter.put('/update/:id', upload.single('image'), update);
+employeeRouter.put("/update/:id", Auth, upload.single("image"), update);
 
 /**
  * @swagger
@@ -241,6 +253,6 @@ employeeRouter.put('/update/:id', upload.single('image'), update);
  *       404:
  *         description: Employee not found
  */
-employeeRouter.delete('/delete/:id', deleteEmployee);
+employeeRouter.delete("/delete/:id", Auth, deleteEmployee);
 
 export default employeeRouter;

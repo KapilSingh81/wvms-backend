@@ -5,7 +5,7 @@ const userRouter = express.Router();
 
 /**
  * @swagger
- * /api/user/login:
+ * /api/auth/login:
  *   post:
  *     summary: Login with email and password
  *     tags: [Auth]

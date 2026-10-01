@@ -1,5 +1,6 @@
 import express from 'express';
 import { Create, deleteRole, List, update } from '../controller/roleController.js';
+import Auth from '../middleware/auth.js';
 
 const roleRouter = express.Router();
 
@@ -38,7 +39,7 @@ const roleRouter = express.Router();
  *       400:
  *         description: Name is missing or role already exists
  */
-roleRouter.post('/create', Create);
+roleRouter.post('/create', Auth, Create);
 
 /**
  * @swagger
@@ -52,7 +53,7 @@ roleRouter.post('/create', Create);
  *       200:
  *         description: List of roles (newest first)
  */
-roleRouter.get('/list', List);
+roleRouter.get('/list', Auth, List);
 
 /**
  * @swagger
@@ -91,7 +92,7 @@ roleRouter.get('/list', List);
  *       404:
  *         description: Role not found
  */
-roleRouter.put('/update/:id', update);
+roleRouter.put('/update/:id', Auth, update);
 
 /**
  * @swagger
@@ -114,6 +115,6 @@ roleRouter.put('/update/:id', update);
  *       404:
  *         description: Role not found
  */
-roleRouter.delete('/delete/:id', deleteRole);
+roleRouter.delete('/delete/:id', Auth, deleteRole);
 
 export default roleRouter;
