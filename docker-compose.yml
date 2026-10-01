@@ -1,0 +1,13 @@
+services:
+  backend:
+    build: .
+    container_name: wvms-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
