@@ -1,0 +1,28 @@
+import { DataTypes } from "sequelize";
+import { sequelize } from "../config/db.config.js";
+import { employeeModel } from "./employeeModel.js";
+
+export const visitorModel = sequelize.define(
+  "visitor_master",
+  {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false },
+    first_name: { type: DataTypes.STRING(100), allowNull: false },
+    last_name: { type: DataTypes.STRING(100), allowNull: false },
+    email: { type: DataTypes.STRING(150), allowNull: false },
+    phone: { type: DataTypes.STRING(20), allowNull: false },
+    gender: { type: DataTypes.STRING(10), allowNull: false },
+    company_name: { type: DataTypes.STRING(150), allowNull: true },
+    national_id_no: { type: DataTypes.STRING(50), allowNull: false },
+    employee_id: { type: DataTypes.INTEGER, allowNull: false },
+    purpose: { type: DataTypes.TEXT, allowNull: false },
+    address: { type: DataTypes.TEXT, allowNull: true },
+    image: { type: DataTypes.STRING(255), allowNull: false },
+    check_in_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+    check_out_time: { type: DataTypes.DATE, allowNull: true },
+    visit_status: { type: DataTypes.STRING(15), allowNull: false, defaultValue: "CHECKED_IN" },
+    is_deleted: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  },
+  { tableName: "visitor_master", freezeTableName: true, timestamps: false }
+);
+
+visitorModel.belongsTo(employeeModel, { foreignKey: "employee_id", as: "employee" });

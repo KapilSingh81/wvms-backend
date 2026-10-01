@@ -10,6 +10,7 @@ import roleRouter from "./routes/roleRoutes.js";
 import adminUserRouter from "./routes/userRoutes.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger.config.js";
+import visitorRouter from "./routes/visitorRoutes.js";
 
 const app = express();
 
@@ -22,7 +23,8 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/employee", employeeRouter);
 app.use("/api/auth", userRouter);
 app.use('/api/role', roleRouter);
-app.use("/api/user", adminUserRouter)
+app.use("/api/user", adminUserRouter);
+app.use("/api/visitor", visitorRouter);
 
 app.get("/", (req, res) => res.send("Api is working"));
 
