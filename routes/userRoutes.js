@@ -30,7 +30,7 @@ const adminUserRouter = express.Router();
 
 /**
  * @swagger
- * /api/admin-user/create:
+ * /api/user/create:
  *   post:
  *     summary: Create an admin user
  *     tags: [Admin User]
@@ -90,7 +90,7 @@ adminUserRouter.post('/create', upload.single('image'), Create);
 
 /**
  * @swagger
- * /api/admin-user/list:
+ * /api/user/list:
  *   get:
  *     summary: Get all admin users
  *     tags: [Admin User]
@@ -104,7 +104,7 @@ adminUserRouter.get('/list', List);
 
 /**
  * @swagger
- * /api/admin-user/{id}:
+ * /api/user/{id}:
  *   get:
  *     summary: Get an admin user by id
  *     tags: [Admin User]
@@ -127,7 +127,7 @@ adminUserRouter.get('/:id', GetById);
 
 /**
  * @swagger
- * /api/admin-user/update/{id}:
+ * /api/user/update/{id}:
  *   put:
  *     summary: Update an admin user
  *     description: Password and image are optional. Leave them out to keep the existing values.
@@ -195,7 +195,7 @@ adminUserRouter.put('/update/:id', upload.single('image'), update);
 
 /**
  * @swagger
- * /api/admin-user/delete/{id}:
+ * /api/user/delete/{id}:
  *   delete:
  *     summary: Delete an admin user (soft delete)
  *     tags: [Admin User]
