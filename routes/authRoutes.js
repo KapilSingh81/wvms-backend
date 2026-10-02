@@ -19,7 +19,7 @@ const userRouter = express.Router();
  *             properties:
  *               email:
  *                 type: string
- *                 example: admin@example.com
+ *                 example: admin@gmail.com
  *               password:
  *                 type: string
  *                 example: "123456"

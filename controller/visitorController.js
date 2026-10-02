@@ -46,7 +46,6 @@ const Create = async (req, res) => {
         const phoneClean = phone.trim();
         const nationalIdClean = national_id_no.trim();
 
-        // email, phone ya national id, koi bhi already hai to create nahi
         const exist = await visitorModel.findOne({
             where: {
                 is_deleted: false,
@@ -79,9 +78,9 @@ const Create = async (req, res) => {
             purpose,
             address,
             image: req.file.filename,
-            check_in_time: new Date(),
+            check_in_time: new Date().toLocaleDateString('en-IN'),
             visit_status: "CHECKED_IN",
-            created_by: req.user.id,   // token wale operator se
+            created_by: req.user.id, 
         });
 
         const data = await visitorModel.findByPk(visitor.id, { include });
@@ -107,7 +106,6 @@ const List = async (req, res) => {
     }
 };
 
-// GET /api/visitor/search?q=<phone ya national id>
 const Search = async (req, res) => {
     try {
         const q = (req.query.q || "").trim();
@@ -177,7 +175,6 @@ const update = async (req, res) => {
         const phoneClean = phone.trim();
         const nationalIdClean = national_id_no.trim();
 
-        // kisi aur visitor ka email/phone/national id to nahi
         const duplicate = await visitorModel.findOne({
             where: {
                 is_deleted: false,
@@ -213,7 +210,7 @@ const update = async (req, res) => {
         };
         if (req.file) payload.image = req.file.filename;
 
-        await visitor.update(payload); // check-in/out time aur operator yahan se change nahi hote
+        await visitor.update(payload);
 
         const data = await visitorModel.findByPk(visitor.id, { include });
         return ResponseService.success(res, 'Visitor updated successfully', data);
@@ -234,7 +231,7 @@ const Checkout = async (req, res) => {
         }
 
         await visitor.update({
-            check_out_time: new Date(),
+            check_out_time: new Date().toLocaleDateString('en-IN'),
             visit_status: "CHECKED_OUT",
             checked_out_by: req.user.id,
         });
