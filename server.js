@@ -13,6 +13,7 @@ import { swaggerSpec } from "./config/swagger.config.js";
 import visitorRouter from "./routes/visitorRoutes.js";
 import commonRouter from "./routes/commonRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
+import aadhaarRouter from "./routes/aadhaarRoutes.js";
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/user", adminUserRouter);
 app.use("/api/visitor", visitorRouter);
 app.use("/api/common", commonRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/aadhaar", aadhaarRouter);
 
 app.get("/", (req, res) => res.send("Api is working"));
 

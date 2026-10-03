@@ -1,6 +1,8 @@
 import { Op } from "sequelize";
 import validator from "validator";
+import { sequelize } from "../config/db.config.js";
 import { visitorModel } from "../model/visitorModel.js";
+import { visitorHistoryModel } from "../model/visitorHistoryModel.js";
 import { employeeModel } from "../model/employeeModel.js";
 import { departmentModel } from "../model/departmentModel.js";
 import { adminUserModel } from "../model/userModel.js";
@@ -18,6 +20,10 @@ const include = [
     { model: adminUserModel, as: "created_by_user", attributes: operatorAttrs },
     { model: adminUserModel, as: "checked_out_by_user", attributes: operatorAttrs },
 ];
+
+const historyInclude = { model: visitorHistoryModel, as: "history", required: false };
+const historyOrder = [[{ model: visitorHistoryModel, as: "history" }, "id", "DESC"]];
+const fullInclude = [...include, historyInclude];
 
 const duplicateField = (exist, email, phone) =>
     exist.email.toLowerCase() === email ? "Email" :
@@ -78,13 +84,13 @@ const Create = async (req, res) => {
             purpose,
             address,
             image: req.file.filename,
-            check_in_time: new Date(), 
+            check_in_time: new Date(),
             visit_status: "CHECKED_IN",
             created_by: req.user.id,
         });
 
         const data = await visitorModel.findByPk(visitor.id, { include });
-        return ResponseService.created(res, 'Visitor checked in successfully', data);
+        return ResponseService.created(res, data, 'Visitor checked in successfully');
     } catch (error) {
         return ResponseService.error(res, error.message);
     }
@@ -106,6 +112,7 @@ const List = async (req, res) => {
     }
 };
 
+// GET /api/visitor/search?q=<phone or national id>
 const Search = async (req, res) => {
     try {
         const q = (req.query.q || "").trim();
@@ -113,22 +120,22 @@ const Search = async (req, res) => {
             return ResponseService.badRequest(res, 'Enter phone or national id');
         }
 
-        const visits = await visitorModel.findAll({
+        const visitor = await visitorModel.findOne({
             where: {
                 is_deleted: false,
                 [Op.or]: [{ phone: q }, { national_id_no: q }],
             },
-            include,
-            order: [['id', 'DESC']],
+            include: fullInclude,
+            order: historyOrder,
         });
+        if (!visitor) return ResponseService.notFound(res, 'No previous visitor found');
 
-        if (!visits.length) return ResponseService.notFound(res, 'No previous visitor found');
-
+        const past = visitor.history || [];
         return ResponseService.success(res, 'Success', {
-            visitor: visits[0],
-            total_visits: visits.length,
-            is_currently_checked_in: visits[0].visit_status === "CHECKED_IN",
-            history: visits,
+            visitor,                                            // form prefill
+            total_visits: past.length + 1,                      // past visits + current
+            is_currently_checked_in: visitor.visit_status === "CHECKED_IN",
+            history: past,                                      // earlier visits, latest first
         });
     } catch (error) {
         return ResponseService.error(res, error.message);
@@ -139,7 +146,8 @@ const GetById = async (req, res) => {
     try {
         const visitor = await visitorModel.findOne({
             where: { id: req.params.id, is_deleted: false },
-            include,
+            include: fullInclude,
+            order: historyOrder,
         });
         if (!visitor) return ResponseService.notFound(res, 'Visitor not found');
         return ResponseService.success(res, 'Success', visitor);
@@ -210,10 +218,40 @@ const update = async (req, res) => {
         };
         if (req.file) payload.image = req.file.filename;
 
-        await visitor.update(payload);
+        const wasCheckedOut = visitor.visit_status === "CHECKED_OUT";
 
-        const data = await visitorModel.findByPk(visitor.id, { include });
-        return ResponseService.success(res, 'Visitor updated successfully', data);
+        await sequelize.transaction(async (t) => {
+            if (wasCheckedOut) {
+                // 1. save the finished visit in history
+                await visitorHistoryModel.create({
+                    visitor_id: visitor.id,
+                    employee_id: visitor.employee_id,
+                    purpose: visitor.purpose,
+                    check_in_time: visitor.getDataValue("check_in_time"),
+                    check_out_time: visitor.getDataValue("check_out_time"),
+                    created_by: visitor.created_by,
+                    checked_out_by: visitor.checked_out_by,
+                }, { transaction: t });
+
+                // 2. start a new visit on the same visitor row
+                payload.check_in_time = new Date();
+                payload.check_out_time = null;
+                payload.checked_out_by = null;
+                payload.created_by = req.user.id;
+                payload.visit_status = "CHECKED_IN";
+            }
+            await visitor.update(payload, { transaction: t });
+        });
+
+        const data = await visitorModel.findByPk(visitor.id, {
+            include: fullInclude,
+            order: historyOrder,
+        });
+        return ResponseService.success(
+            res,
+            wasCheckedOut ? 'Visitor checked in again' : 'Visitor updated successfully',
+            data
+        );
     } catch (error) {
         return ResponseService.error(res, error.message);
     }
