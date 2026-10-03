@@ -33,26 +33,6 @@ export const visitorModel = sequelize.define(
     },
     check_in_time: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     check_out_time: { type: DataTypes.DATE, allowNull: true },
-
-    // sirf response ke liye, DB mein column nahi banega
-    check_in_date: {
-      type: DataTypes.VIRTUAL,
-      get() { return istDate(this.getDataValue("check_in_time")); },
-    },
-    check_out_date: {
-      type: DataTypes.VIRTUAL,
-      get() { return istDate(this.getDataValue("check_out_time")); },
-    },
-
-    check_in_time_ist: {
-      type: DataTypes.VIRTUAL,
-      get() { return istDateTime(this.getDataValue("check_in_time")); },
-    },
-    check_out_time_ist: {
-      type: DataTypes.VIRTUAL,
-      get() { return istDateTime(this.getDataValue("check_out_time")); },
-    },
-
     visit_status: { type: DataTypes.STRING(15), allowNull: false, defaultValue: "CHECKED_IN" },
     created_by: { type: DataTypes.INTEGER, allowNull: true },
     checked_out_by: { type: DataTypes.INTEGER, allowNull: true },
@@ -64,3 +44,10 @@ export const visitorModel = sequelize.define(
 visitorModel.belongsTo(employeeModel, { foreignKey: "employee_id", as: "employee" });
 visitorModel.belongsTo(adminUserModel, { foreignKey: "created_by", as: "created_by_user", constraints: false });
 visitorModel.belongsTo(adminUserModel, { foreignKey: "checked_out_by", as: "checked_out_by_user", constraints: false });
+
+visitorModel.prototype.toJSON = function () {
+  const v = { ...this.get({ plain: true }) };
+  v.check_in_time = istDateTime(this.getDataValue("check_in_time"));
+  v.check_out_time = istDateTime(this.getDataValue("check_out_time"));
+  return v;
+};

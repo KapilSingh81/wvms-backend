@@ -78,6 +78,7 @@ const Create = async (req, res) => {
             purpose,
             address,
             image: req.file.filename,
+            check_in_time: new Date(), 
             visit_status: "CHECKED_IN",
             created_by: req.user.id,
         });
