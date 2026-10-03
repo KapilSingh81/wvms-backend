@@ -19,7 +19,6 @@ const include = [
     { model: adminUserModel, as: "checked_out_by_user", attributes: operatorAttrs },
 ];
 
-
 const TYPES = ["total", "checked_in", "checked_out", "still_inside"];
 
 const dashboardData = async (req, res) => {
@@ -55,7 +54,11 @@ const dashboardData = async (req, res) => {
             visitorModel.findAll({
                 where: {
                     is_deleted: false,
-                    [Op.or]: [{ check_in_time: range }, { check_out_time: range }],
+                    [Op.or]: [
+                        { check_in_time: range },
+                        { check_out_time: range },
+                        { visit_status: "CHECKED_IN" }, // abhi andar wale hamesha aaye
+                    ],
                 },
                 include,
                 order: [["check_in_time", "DESC"]],
@@ -65,12 +68,13 @@ const dashboardData = async (req, res) => {
         const inRange = (d) => d && d >= start && d <= end;
 
         const filters = {
-            total: () => true,
+            total: (v) => inRange(v.check_in_time) || inRange(v.check_out_time),
             checked_in: (v) => inRange(v.check_in_time),
             checked_out: (v) => inRange(v.check_out_time),
             still_inside: (v) => v.visit_status === "CHECKED_IN",
         };
 
+        const totalVisitors = visitors.filter(filters.total).length;
         const checkedIn = visitors.filter(filters.checked_in).length;
         const checkedOut = visitors.filter(filters.checked_out).length;
         const stillInside = visitors.filter(filters.still_inside).length;
@@ -80,7 +84,7 @@ const dashboardData = async (req, res) => {
         return ResponseService.success(res, "Success", {
             summary: {
                 total_employees: totalEmployees,
-                total_visitors: visitors.length,
+                total_visitors: totalVisitors,
                 checked_in: checkedIn,
                 checked_out: checkedOut,
                 still_inside: stillInside,

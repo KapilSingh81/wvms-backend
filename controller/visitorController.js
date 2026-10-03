@@ -21,7 +21,7 @@ const include = [
 
 const duplicateField = (exist, email, phone) =>
     exist.email.toLowerCase() === email ? "Email" :
-    exist.phone === phone ? "Phone number" : "National ID";
+        exist.phone === phone ? "Phone number" : "National ID";
 
 const Create = async (req, res) => {
     try {
@@ -78,9 +78,8 @@ const Create = async (req, res) => {
             purpose,
             address,
             image: req.file.filename,
-            check_in_time: new Date().toLocaleDateString('en-IN'),
             visit_status: "CHECKED_IN",
-            created_by: req.user.id, 
+            created_by: req.user.id,
         });
 
         const data = await visitorModel.findByPk(visitor.id, { include });
@@ -231,7 +230,7 @@ const Checkout = async (req, res) => {
         }
 
         await visitor.update({
-            check_out_time: new Date().toLocaleDateString('en-IN'),
+            check_out_time: new Date(),
             visit_status: "CHECKED_OUT",
             checked_out_by: req.user.id,
         });
