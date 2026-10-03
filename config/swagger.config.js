@@ -20,8 +20,25 @@ const options = {
           bearerFormat: "JWT",
         },
       },
+      schemas: {
+        AadhaarError: {
+          type: "object",
+          properties: {
+            status: {
+              type: "object",
+              properties: {
+                code: { type: "integer", example: 400 },
+                type: { type: "string", example: "error" },
+                message: { type: "string", example: "Aadhaar must be 12 digits" },
+              },
+            },
+            message: { type: "string", example: "Aadhaar must be 12 digits" },
+            error: { type: "string", nullable: true, example: null },
+          },
+        },
+      },
     },
-  },
+  }, 
   apis: ["./routes/*.js"], 
 };
 
