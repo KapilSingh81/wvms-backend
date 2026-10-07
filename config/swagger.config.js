@@ -9,8 +9,7 @@ const options = {
       description: "WVMS backend API documentation",
     },
     servers: [
-      { url: "http://localhost:4000", description: "Local" },
-      { url: "http://89.116.34.155:4000", description: "Server" },
+      { url: "https://wvmsapi.wavecorp.in", description: "Server" }   
     ],
     components: {
       securitySchemes: {
