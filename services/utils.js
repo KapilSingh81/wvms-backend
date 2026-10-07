@@ -1,7 +1,6 @@
 const DT_RE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?(Z|[+-]\d{2}:?\d{2})?$/;
 const IST_OFFSET = "+05:30";
 
-// "YYYY-MM-DD" ya "YYYY-MM-DDTHH:mm[:ss]" -> Date. Offset na ho to IST maanta hai.
 export const parseDateTime = (value, isEnd) => {
     const m = DT_RE.exec(String(value).trim());
     if (!m) return null;
@@ -24,6 +23,5 @@ export const parseDateTime = (value, isEnd) => {
     return isNaN(d) ? null : d;
 };
 
-// Aaj ki date India ke hisaab se, YYYY-MM-DD format mein
 export const todayStr = () =>
     new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });

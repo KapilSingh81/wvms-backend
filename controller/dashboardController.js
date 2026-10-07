@@ -64,7 +64,6 @@ const dashboardData = async (req, res) => {
             total: (v) => inRange(v.check_in_time) || inRange(v.check_out_time),
             checked_in: (v) => inRange(v.check_in_time),
             checked_out: (v) => inRange(v.check_out_time),
-            // checked in within the selected dates and not checked out yet
             still_inside: (v) => v.visit_status === "CHECKED_IN" && inRange(v.check_in_time),
         };
 
