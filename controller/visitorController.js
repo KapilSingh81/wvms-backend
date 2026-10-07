@@ -21,7 +21,21 @@ const include = [
     { model: adminUserModel, as: "checked_out_by_user", attributes: operatorAttrs },
 ];
 
-const historyInclude = { model: visitorHistoryModel, as: "history", required: false };
+const historyInclude = {
+    model: visitorHistoryModel,
+    as: "history",
+    required: false,
+    include: [
+        {
+            model: employeeModel,
+            as: "employee",
+            attributes: ["id", "first_name", "last_name"],
+            include: [{ model: departmentModel, as: "department", attributes: ["id", "name"] }],
+        },
+        { model: adminUserModel, as: "created_by_user", attributes: operatorAttrs },
+        { model: adminUserModel, as: "checked_out_by_user", attributes: operatorAttrs },
+    ],
+};
 const historyOrder = [[{ model: visitorHistoryModel, as: "history" }, "id", "DESC"]];
 const fullInclude = [...include, historyInclude];
 
@@ -131,11 +145,13 @@ const Search = async (req, res) => {
         if (!visitor) return ResponseService.notFound(res, 'No previous visitor found');
 
         const past = visitor.history || [];
+        const visitor_name = `${visitor.first_name} ${visitor.last_name}`;
+        const history = past.map((h) => ({ ...h.toJSON(), visitor_name }));
         return ResponseService.success(res, 'Success', {
-            visitor,                                            // form prefill
-            total_visits: past.length + 1,                      // past visits + current
+            visitor,
+            total_visits: past.length + 1,
             is_currently_checked_in: visitor.visit_status === "CHECKED_IN",
-            history: past,                                      // earlier visits, latest first
+            history,
         });
     } catch (error) {
         return ResponseService.error(res, error.message);
@@ -222,7 +238,6 @@ const update = async (req, res) => {
 
         await sequelize.transaction(async (t) => {
             if (wasCheckedOut) {
-                // 1. save the finished visit in history
                 await visitorHistoryModel.create({
                     visitor_id: visitor.id,
                     employee_id: visitor.employee_id,
@@ -233,7 +248,6 @@ const update = async (req, res) => {
                     checked_out_by: visitor.checked_out_by,
                 }, { transaction: t });
 
-                // 2. start a new visit on the same visitor row
                 payload.check_in_time = new Date();
                 payload.check_out_time = null;
                 payload.checked_out_by = null;

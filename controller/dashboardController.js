@@ -28,20 +28,14 @@ const dashboardData = async (req, res) => {
         const type = (req.query.type || "total").toLowerCase();
 
         if (!TYPES.includes(type)) {
-            return ResponseService.badRequest(
-                res,
-                `Invalid type. Use one of: ${TYPES.join(", ")}`
-            );
+            return ResponseService.badRequest(res, `Invalid type. Use one of: ${TYPES.join(", ")}`);
         }
 
         const start = parseDateTime(from_date, false);
         const end = parseDateTime(to_date, true);
 
         if (!start || !end) {
-            return ResponseService.badRequest(
-                res,
-                "Invalid date. Use YYYY-MM-DD or YYYY-MM-DDTHH:mm[:ss]"
-            );
+            return ResponseService.badRequest(res, "Invalid date. Use YYYY-MM-DD or YYYY-MM-DDTHH:mm[:ss]");
         }
         if (start > end) {
             return ResponseService.badRequest(res, "from_date cannot be after to_date");
@@ -57,7 +51,6 @@ const dashboardData = async (req, res) => {
                     [Op.or]: [
                         { check_in_time: range },
                         { check_out_time: range },
-                        { visit_status: "CHECKED_IN" }, // abhi andar wale hamesha aaye
                     ],
                 },
                 include,
@@ -71,25 +64,21 @@ const dashboardData = async (req, res) => {
             total: (v) => inRange(v.check_in_time) || inRange(v.check_out_time),
             checked_in: (v) => inRange(v.check_in_time),
             checked_out: (v) => inRange(v.check_out_time),
-            still_inside: (v) => v.visit_status === "CHECKED_IN",
+            // checked in within the selected dates and not checked out yet
+            still_inside: (v) => v.visit_status === "CHECKED_IN" && inRange(v.check_in_time),
         };
 
-        const totalVisitors = visitors.filter(filters.total).length;
-        const checkedIn = visitors.filter(filters.checked_in).length;
-        const checkedOut = visitors.filter(filters.checked_out).length;
-        const stillInside = visitors.filter(filters.still_inside).length;
-
-        const list = visitors.filter(filters[type]);
+        const count = (key) => visitors.filter(filters[key]).length;
 
         return ResponseService.success(res, "Success", {
             summary: {
                 total_employees: totalEmployees,
-                total_visitors: totalVisitors,
-                checked_in: checkedIn,
-                checked_out: checkedOut,
-                still_inside: stillInside,
+                total_visitors: count("total"),
+                checked_in: count("checked_in"),
+                checked_out: count("checked_out"),
+                still_inside: count("still_inside"),
             },
-            visitors: list,
+            visitors: visitors.filter(filters[type]),
         });
     } catch (error) {
         return ResponseService.error(res, error.message);

@@ -1,5 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.config.js";
+import { employeeModel } from "./employeeModel.js";
+import { adminUserModel } from "./userModel.js";
 
 const istDateTime = (d) =>
   d ? d.toLocaleString("sv-SE", { timeZone: "Asia/Kolkata" }) : null;
@@ -19,6 +21,9 @@ export const visitorHistoryModel = sequelize.define(
   { tableName: "visitor_history", freezeTableName: true, timestamps: false }
 );
 
+visitorHistoryModel.belongsTo(employeeModel, { foreignKey: "employee_id", as: "employee", constraints: false });
+visitorHistoryModel.belongsTo(adminUserModel, { foreignKey: "created_by", as: "created_by_user", constraints: false });
+visitorHistoryModel.belongsTo(adminUserModel, { foreignKey: "checked_out_by", as: "checked_out_by_user", constraints: false });
 visitorHistoryModel.prototype.toJSON = function () {
   const v = { ...this.get({ plain: true }) };
   v.check_in_time = istDateTime(this.getDataValue("check_in_time"));
