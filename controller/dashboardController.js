@@ -62,7 +62,7 @@ const dashboardData = async (req, res) => {
 
         const filters = {
             total: (v) => inRange(v.check_in_time) || inRange(v.check_out_time),
-            checked_in: (v) => inRange(v.check_in_time),
+            checked_in: (v) => inRange(v.check_in_time) || inRange(v.check_out_time), 
             checked_out: (v) => inRange(v.check_out_time),
             still_inside: (v) => v.visit_status === "CHECKED_IN" && inRange(v.check_in_time),
         };
