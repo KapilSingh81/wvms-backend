@@ -7,6 +7,7 @@ import { employeeModel } from "../model/employeeModel.js";
 import { departmentModel } from "../model/departmentModel.js";
 import { adminUserModel } from "../model/userModel.js";
 import ResponseService from "../services/httpService.js";
+import { hashValue } from "../services/crypto.js";
 
 const operatorAttrs = ["id", "first_name", "last_name", "username"];
 
@@ -39,9 +40,23 @@ const historyInclude = {
 const historyOrder = [[{ model: visitorHistoryModel, as: "history" }, "id", "DESC"]];
 const fullInclude = [...include, historyInclude];
 
-const duplicateField = (exist, email, phone) =>
-    exist.email.toLowerCase() === email ? "Email" :
-        exist.phone === phone ? "Phone number" : "National ID";
+const cleanEmail = (email) =>
+    email && String(email).trim() ? String(email).trim().toLowerCase() : null;
+
+const duplicateField = (exist, email, phone) => {
+    if (email && exist.email && exist.email.toLowerCase() === email) return "Email";
+    if (exist.phone === phone) return "Phone number";
+    return "National ID";
+};
+
+const buildDuplicateConditions = (emailClean, phoneClean, nationalIdHash) => {
+    const conditions = [
+        { phone: phoneClean },
+        { national_id_hash: nationalIdHash },
+    ];
+    if (emailClean) conditions.push({ email: emailClean });
+    return conditions;
+};
 
 const Create = async (req, res) => {
     try {
@@ -54,26 +69,24 @@ const Create = async (req, res) => {
             !national_id_no || !employee_id || !purpose) {
             return ResponseService.badRequest(res, 'Required fields are missing');
         }
-        // if (!validator.isEmail(email)) {
-        //     return ResponseService.badRequest(res, 'Please enter a valid email');
-        // }
-        if (!validator.isNumeric(phone)) {
+
+        const emailClean = cleanEmail(email);
+        const phoneClean = String(phone).trim();
+        const nationalIdClean = String(national_id_no).trim();
+        const nationalIdHash = hashValue(nationalIdClean);
+
+        if (emailClean && !validator.isEmail(emailClean)) {
+            return ResponseService.badRequest(res, 'Please enter a valid email');
+        }
+        if (!validator.isNumeric(phoneClean)) {
             return ResponseService.badRequest(res, 'Phone must be digits only (with country code, without +)');
         }
         if (!req.file) return ResponseService.badRequest(res, 'Visitor image is required');
 
-        const emailClean = email.trim().toLowerCase();
-        const phoneClean = phone.trim();
-        const nationalIdClean = national_id_no.trim();
-
         const exist = await visitorModel.findOne({
             where: {
                 is_deleted: false,
-                [Op.or]: [
-                    { email: emailClean },
-                    { phone: phoneClean },
-                    { national_id_no: nationalIdClean },
-                ],
+                [Op.or]: buildDuplicateConditions(emailClean, phoneClean, nationalIdHash),
             },
         });
         if (exist) {
@@ -94,6 +107,7 @@ const Create = async (req, res) => {
             gender,
             company_name,
             national_id_no: nationalIdClean,
+            national_id_hash: nationalIdHash,
             employee_id,
             purpose,
             address,
@@ -137,7 +151,7 @@ const Search = async (req, res) => {
         const visitor = await visitorModel.findOne({
             where: {
                 is_deleted: false,
-                [Op.or]: [{ phone: q }, { national_id_no: q }],
+                [Op.or]: [{ phone: q }, { national_id_hash: hashValue(q) }],
             },
             include: fullInclude,
             order: historyOrder,
@@ -171,6 +185,7 @@ const GetById = async (req, res) => {
         return ResponseService.error(res, error.message);
     }
 };
+const isMasked = (v) => /\*/.test(String(v));
 
 const update = async (req, res) => {
     try {
@@ -184,31 +199,33 @@ const update = async (req, res) => {
             national_id_no, employee_id, purpose, address,
         } = req.body;
 
-        if (!first_name || !last_name || !email || !phone || !gender ||
-            !national_id_no || !employee_id || !purpose) {
+        if (!first_name || !last_name || !phone || !gender || !employee_id || !purpose) {
             return ResponseService.badRequest(res, 'Required fields are missing');
         }
+
+        const emailClean = cleanEmail(email);
+        const phoneClean = String(phone).trim();
+
+        const idInput = national_id_no ? String(national_id_no).trim() : '';
+        const idChanged = idInput !== '' && !isMasked(idInput);
+        const nationalIdHash = idChanged ? hashValue(idInput) : null;
+
         if (emailClean && !validator.isEmail(emailClean)) {
             return ResponseService.badRequest(res, 'Please enter a valid email');
         }
-        if (!validator.isNumeric(phone)) {
+        if (!validator.isNumeric(phoneClean)) {
             return ResponseService.badRequest(res, 'Phone must be digits only (with country code, without +)');
         }
 
-        const emailClean = email && email?.trim() ? email?.trim().toLowerCase() : null;
-        const phoneClean = phone.trim();
-        const nationalIdClean = national_id_no.trim();
-
-        const orConditions = [
-            { phone: phoneClean },
-            { national_id_no: nationalIdClean },
-        ];
-        if (emailClean) orConditions.push({ email: emailClean });
+        const conditions = [{ phone: phoneClean }];
+        if (emailClean) conditions.push({ email: emailClean });
+        if (idChanged) conditions.push({ national_id_hash: nationalIdHash });
 
         const duplicate = await visitorModel.findOne({
             where: {
                 is_deleted: false,
-                [Op.or]: orConditions,
+                id: { [Op.ne]: visitor.id },
+                [Op.or]: conditions,
             },
         });
         if (duplicate) {
@@ -228,11 +245,14 @@ const update = async (req, res) => {
             phone: phoneClean,
             gender,
             company_name,
-            national_id_no: nationalIdClean,
             employee_id,
             purpose,
             address,
         };
+        if (idChanged) {
+            payload.national_id_no = idInput;
+            payload.national_id_hash = nationalIdHash;
+        }
         if (req.file) payload.image = req.file.filename;
 
         const wasCheckedOut = visitor.visit_status === "CHECKED_OUT";
