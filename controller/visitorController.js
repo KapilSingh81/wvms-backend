@@ -50,13 +50,13 @@ const Create = async (req, res) => {
             national_id_no, employee_id, purpose, address,
         } = req.body;
 
-        if (!first_name || !last_name || !email || !phone || !gender ||
+        if (!first_name || !last_name || !phone || !gender ||
             !national_id_no || !employee_id || !purpose) {
             return ResponseService.badRequest(res, 'Required fields are missing');
         }
-        if (!validator.isEmail(email)) {
-            return ResponseService.badRequest(res, 'Please enter a valid email');
-        }
+        // if (!validator.isEmail(email)) {
+        //     return ResponseService.badRequest(res, 'Please enter a valid email');
+        // }
         if (!validator.isNumeric(phone)) {
             return ResponseService.badRequest(res, 'Phone must be digits only (with country code, without +)');
         }
@@ -188,26 +188,27 @@ const update = async (req, res) => {
             !national_id_no || !employee_id || !purpose) {
             return ResponseService.badRequest(res, 'Required fields are missing');
         }
-        if (!validator.isEmail(email)) {
+        if (emailClean && !validator.isEmail(emailClean)) {
             return ResponseService.badRequest(res, 'Please enter a valid email');
         }
         if (!validator.isNumeric(phone)) {
             return ResponseService.badRequest(res, 'Phone must be digits only (with country code, without +)');
         }
 
-        const emailClean = email.trim().toLowerCase();
+        const emailClean = email && email?.trim() ? email?.trim().toLowerCase() : null;
         const phoneClean = phone.trim();
         const nationalIdClean = national_id_no.trim();
+
+        const orConditions = [
+            { phone: phoneClean },
+            { national_id_no: nationalIdClean },
+        ];
+        if (emailClean) orConditions.push({ email: emailClean });
 
         const duplicate = await visitorModel.findOne({
             where: {
                 is_deleted: false,
-                id: { [Op.ne]: visitor.id },
-                [Op.or]: [
-                    { email: emailClean },
-                    { phone: phoneClean },
-                    { national_id_no: nationalIdClean },
-                ],
+                [Op.or]: orConditions,
             },
         });
         if (duplicate) {
